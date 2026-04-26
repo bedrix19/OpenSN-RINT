@@ -12,9 +12,17 @@
 **/tmp
 configuration
 
+#[Python]
+**/__pycache__
+.venv/
+venv/
+.env
+
 #[Build Mid-Files]
 **/cmake-build-debug
-**/__pycache__
+*.o
+*.so
+*.a
 
 #[Binary Files]
 *.mp4
@@ -29,3 +37,4 @@ daemon/opensn-daemon
 tools/namespace-generator/generator
 daemon/share/static/
 opensn_build
+opensn_build.tar.gz

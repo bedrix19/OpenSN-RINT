@@ -1,0 +1,362 @@
+{
+  "instances": [
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_0_0",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 000.0000 0000011   0.0000   0.0000 13.15070000000000",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "0",
+        "SatelliteIndex": "0"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_0_1",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 000.0000 0000011   0.0000  90.0000 13.15070000000009",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "0",
+        "SatelliteIndex": "1"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_0_2",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 000.0000 0000011   0.0000 180.0000 13.15070000000009",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "0",
+        "SatelliteIndex": "2"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_0_3",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 000.0000 0000011   0.0000 270.0000 13.15070000000009",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "0",
+        "SatelliteIndex": "3"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_1_0",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 090.0000 0000011   0.0000  45.0000 13.15070000000008",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "1",
+        "SatelliteIndex": "0"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_1_1",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 090.0000 0000011   0.0000 135.0000 13.15070000000008",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "1",
+        "SatelliteIndex": "1"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_1_2",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 090.0000 0000011   0.0000 225.0000 13.15070000000008",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "1",
+        "SatelliteIndex": "2"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Satellite",
+      "extra": {
+        "TLE_0": "NODE_1_3",
+        "TLE_1": "1 00000U 23666A   26109.82949057  .00000000  00000-0 00000000 0 00007",
+        "TLE_2": "2 00000  90.0000 090.0000 0000011   0.0000 315.0000 13.15070000000008",
+        "Area": "0.0.0.0",
+        "OrbitIndex": "1",
+        "SatelliteIndex": "3"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "GroundStation",
+      "extra": {
+        "GroundStationIndex": "0",
+        "latitude": "-83.27464846170668",
+        "longitude": "-81.87301750454633",
+        "altitude": "9.890920382031759",
+        "role": "tu_gs"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "GroundStation",
+      "extra": {
+        "GroundStationIndex": "1",
+        "latitude": "-17.62366560139992",
+        "longitude": "100.39873632660061",
+        "altitude": "6.6905849268555695",
+        "role": "cp_gs"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Router",
+      "extra": {
+        "role": "tu_edge"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "Router",
+      "extra": {
+        "role": "cp_edge"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "ContentProvider",
+      "extra": {
+        "role": "cp",
+        "service": "video_http"
+      },
+      "device_info": {}
+    },
+    {
+      "type": "TerminalUser",
+      "extra": {
+        "role": "tu",
+        "client": "video_http"
+      },
+      "device_info": {}
+    }
+  ],
+  "links": [
+    {
+      "end_indexes": [
+        0,
+        1
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        1,
+        2
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        2,
+        3
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        3,
+        0
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        4,
+        5
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        5,
+        6
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        6,
+        7
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        7,
+        4
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        0,
+        4
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        1,
+        5
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        2,
+        6
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        3,
+        7
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        12,
+        11
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        11,
+        9
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        13,
+        10
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    },
+    {
+      "end_indexes": [
+        10,
+        8
+      ],
+      "type": "vlink",
+      "init_parameter": {},
+      "address_infos": [
+        {},
+        {}
+      ],
+      "extra": {}
+    }
+  ]
+}

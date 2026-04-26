@@ -13,41 +13,7 @@ from time import sleep
 from address_allocator import alloc_ipv4,format_ipv4
 from loguru import logger
 import json, math
-step_second = 2
-
-# config para el TU
-TU_ROLE         = "tu_gs"       # must match with extra["role"] from JSON
-TU_SPEED_MPS    = 5000.0         # plane: ~250 m/s, car: ~30 m/s, ship: ~10 m/s, ave-renfe: ~83.3 m/s
-TU_HEADING_DEG  = 45.0          # 0=North, 90=East, 180=South, 270=West
-EARTH_RADIUS_M  = 6_371_000.0
-
-tu_current_lat: float | None = None
-tu_current_lon: float | None = None
-
-def move_ground_position(lat_deg: float, lon_deg: float,
-                         speed_mps: float, heading_deg: float,
-                         dt_seconds: float) -> tuple[float, float]:
-    """
-    Desplaza un punto en la superficie terrestre a velocidad y rumbo constante.
-    Usa la fórmula de punto destino (esfera perfecta).
-    Devuelve (nueva_lat_deg, nueva_lon_deg).
-    """
-    lat1   = math.radians(lat_deg)
-    lon1   = math.radians(lon_deg)
-    theta  = math.radians(heading_deg)  # rumbo en radianes
-    d      = speed_mps * dt_seconds     # distancia recorrida en este paso
-    delta  = d / EARTH_RADIUS_M         # distancia angular en radianes
-
-    lat2 = math.asin(
-        math.sin(lat1) * math.cos(delta) +
-        math.cos(lat1) * math.sin(delta) * math.cos(theta)
-    )
-    lon2 = lon1 + math.atan2(
-        math.sin(theta) * math.sin(delta) * math.cos(lat1),
-        math.cos(delta) - math.sin(lat1) * math.sin(lat2)
-    )
-
-    return math.degrees(lat2), math.degrees(lon2)
+step_second = 5
 
 polar_threshold = dec2ra(66.5)
 
@@ -80,22 +46,16 @@ def genenrate_config(cli:EmulatorOperator,node_index:int,instance_id:str):
 
 if __name__ == "__main__":
 
-
     instance_config_updated:dict[str,str] = {}
     
     cli = EmulatorOperator(ADDR,PORT)
 
-
-    gs_updated_ids: set[str] = set()    # iterated nodes
     # Create Emulator Operator
     while True:
         node_list = cli.get_node_map()
         all_instance_map: dict[str,Instance] = {}
         node_link_map: dict[int,dict[str,LinkBase]] = {}
         ground_station_list:list[Instance] = []
-        gs_updated_ids.clear()
-
-
         for node_index,node in node_list.items():
             instance_map = cli.get_instance_map(node_index)
             for instance_id,instance in instance_map.items():
@@ -103,50 +63,10 @@ if __name__ == "__main__":
                 if instance.type == TYPE_GROUND_STATION:
                     ground_station_list.append(instance)
                     gs_position = Position()
-
-
-                    role = instance.extra.get("role", "")
-                    if role == TU_ROLE:
-                        if tu_current_lat is None:
-                            tu_current_lat = float(instance.extra[EX_LATITUDE_KEY])
-                            tu_current_lon = float(instance.extra[EX_LONGITUDE_KEY])
-                            logger.info(f"[TU] Initialized at lat={tu_current_lat:.4f} lon={tu_current_lon:.4f}")
-
-                        tu_current_lat, tu_current_lon = move_ground_position(
-                            lat_deg     = tu_current_lat,
-                            lon_deg     = tu_current_lon,
-                            speed_mps   = TU_SPEED_MPS,
-                            heading_deg = TU_HEADING_DEG,
-                            dt_seconds  = step_second
-                        )
-                        logger.info(f"[Terminal Unit] new pos: lat={tu_current_lat:.5f}  lon={tu_current_lon:.5f}")
-
-                        # Update extra in-memory so position_map in second loop is consistent
-                        instance.extra[EX_LATITUDE_KEY] = str(tu_current_lat)
-                        instance.extra[EX_LONGITUDE_KEY] = str(tu_current_lon)
-
-                        # Try to persist to etcd (best effort)
-                        try:
-                            cli.put_instance(instance)
-                            logger.debug(f"[TU] put_instance OK for {instance_id}")
-                        except Exception as e:
-                            logger.warning(f"[TU] put_instance failed: {e} — position still updated via put_position")
-
-                        gs_position.latitude  = math.radians(tu_current_lat)
-                        gs_position.longitude = math.radians(tu_current_lon)
-                        # IMPORTANT: altitude must match what calculate_postion does for GS:
-                        # trajectory.py uses deg2rad(altitude) — so replicate that here
-                        gs_position.altitude  = math.radians(float(instance.extra[EX_ALTITUDE_KEY]))
-                    else:
-                        gs_position.latitude  = float(instance.extra[EX_LATITUDE_KEY]) / 180 * math.pi
-                        gs_position.longitude = float(instance.extra[EX_LONGITUDE_KEY]) / 180 * math.pi
-                        gs_position.altitude  = math.radians(float(instance.extra[EX_ALTITUDE_KEY]))
-                    
-                    # This is what the visualizer reads — must be called with correct values
-                    cli.put_position(instance_id, gs_position)
-                    logger.debug(f"[GS] put_position called: id={instance_id} lat={gs_position.latitude:.5f} lon={gs_position.longitude:.5f}")
-                    gs_updated_ids.add(instance_id)
-
+                    gs_position.latitude = float(instance.extra[EX_LATITUDE_KEY]) / 180 * math.pi
+                    gs_position.longitude = float(instance.extra[EX_LONGITUDE_KEY]) / 180 * math.pi
+                    gs_position.altitude = float(instance.extra[EX_ALTITUDE_KEY])
+                    cli.put_position(instance_id,gs_position)
 
         address_map = {}
         for node_index,node in node_list.items():
@@ -169,23 +89,9 @@ if __name__ == "__main__":
                 node_link_map[node_index][link_id] = link_info
                 
 
-
         position_map: dict[str,Position] = {"":Position()}
         time_now = datetime.now()
         for instance_id,instance_info in all_instance_map.items():
-            if instance_id in gs_updated_ids:
-                p = Position()
-                if instance_info.extra.get("role", "") == TU_ROLE:
-                    p.latitude  = math.radians(tu_current_lat)
-                    p.longitude = math.radians(tu_current_lon)
-                else:
-                    p.latitude  = float(instance_info.extra[EX_LATITUDE_KEY]) / 180 * math.pi
-                    p.longitude = float(instance_info.extra[EX_LONGITUDE_KEY]) / 180 * math.pi
-                p.altitude = float(instance_info.extra[EX_ALTITUDE_KEY])
-                
-                position_map[instance_id] = p
-                continue
-                
             if instance_info.start:
                 new_postion = calculate_postion(instance_info,time_now)
                 cli.put_position(instance_id,new_postion)
@@ -280,10 +186,8 @@ if __name__ == "__main__":
                     #         logger.info("disconnect %s"%link_id)
                     link_info.parameter[PARAMETER_KEY_CONNECT] = 1
 
-
                 if link_info.end_infos[0].instance_type == "" :
                     continue
-
 
                 distance = distance_meter(
                     position_map[link_info.end_infos[0].instance_id],
@@ -299,5 +203,5 @@ if __name__ == "__main__":
             if not instance_info.start:
                 continue
             config_map = genenrate_config(cli,instance_info.node_index,instance_id)
-            cli.put_instance_config(instance_info.node_index,instance_id,json.dumps(config_map))
+            cli.put_instance_config_if_not_exist(instance_info.node_index,instance_id,json.dumps(config_map))
         sleep(step_second)
