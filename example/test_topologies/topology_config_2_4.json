@@ -100,8 +100,8 @@
       "type": "GroundStation",
       "extra": {
         "GroundStationIndex": "0",
-        "latitude": "-83.27464846170668",
-        "longitude": "-81.87301750454633",
+        "latitude": "40.406556",
+        "longitude": "-3.689508",
         "altitude": "9.890920382031759",
         "role": "tu_gs"
       },
@@ -115,36 +115,6 @@
         "longitude": "100.39873632660061",
         "altitude": "6.6905849268555695",
         "role": "cp_gs"
-      },
-      "device_info": {}
-    },
-    {
-      "type": "Router",
-      "extra": {
-        "role": "tu_edge"
-      },
-      "device_info": {}
-    },
-    {
-      "type": "Router",
-      "extra": {
-        "role": "cp_edge"
-      },
-      "device_info": {}
-    },
-    {
-      "type": "ContentProvider",
-      "extra": {
-        "role": "cp",
-        "service": "video_http"
-      },
-      "device_info": {}
-    },
-    {
-      "type": "TerminalUser",
-      "extra": {
-        "role": "tu",
-        "client": "video_http"
       },
       "device_info": {}
     }
@@ -297,58 +267,6 @@
       "end_indexes": [
         3,
         7
-      ],
-      "type": "vlink",
-      "init_parameter": {},
-      "address_infos": [
-        {},
-        {}
-      ],
-      "extra": {}
-    },
-    {
-      "end_indexes": [
-        12,
-        11
-      ],
-      "type": "vlink",
-      "init_parameter": {},
-      "address_infos": [
-        {},
-        {}
-      ],
-      "extra": {}
-    },
-    {
-      "end_indexes": [
-        11,
-        9
-      ],
-      "type": "vlink",
-      "init_parameter": {},
-      "address_infos": [
-        {},
-        {}
-      ],
-      "extra": {}
-    },
-    {
-      "end_indexes": [
-        13,
-        10
-      ],
-      "type": "vlink",
-      "init_parameter": {},
-      "address_infos": [
-        {},
-        {}
-      ],
-      "extra": {}
-    },
-    {
-      "end_indexes": [
-        10,
-        8
       ],
       "type": "vlink",
       "init_parameter": {},

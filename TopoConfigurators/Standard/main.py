@@ -6,7 +6,7 @@ from opensn.model.link import LinkBase
 from opensn.utils.tools import dec2ra
 from config import ADDR,PORT
 from datetime import datetime
-from trajectory import calculate_postion,distance_meter,select_closest_satellite,get_propagation_delay_s
+from trajectory import move_ground_position, move_TU_position, bearing_to, haversine_m, calculate_postion,distance_meter,select_closest_satellite,get_propagation_delay_s
 from instance_types import TYPE_GROUND_STATION, TYPE_SATELLITE, EX_ORBIT_INDEX,EX_ALTITUDE_KEY,EX_LATITUDE_KEY,EX_LONGITUDE_KEY, EX_AREA_KEY
 from address_type import LINK_V4_ADDR_KEY
 from time import sleep
@@ -16,38 +16,26 @@ import json, math
 step_second = 2
 
 # config para el TU
-TU_ROLE         = "tu_gs"       # must match with extra["role"] from JSON
-TU_SPEED_MPS    = 5000.0         # plane: ~250 m/s, car: ~30 m/s, ship: ~10 m/s, ave-renfe: ~83.3 m/s
-TU_HEADING_DEG  = 45.0          # 0=North, 90=East, 180=South, 270=West
-EARTH_RADIUS_M  = 6_371_000.0
+TU_WAYPOINTS = [
+    # overwrite the start position from the json
+    (40.4722, -3.6870), # Madrid Ch
+    (41.5034, -5.7425), # Zamora
+    (42.3687, -7.8641), # Ourense
+    (42.8781, -8.5448), # Santiago de Compostela
+    (42.5947, -8.7654), # Vilagarcia de Arousa
+    (42.4260, -8.6478), # Pontevedra
+    (42.2328, -8.7226), # Vigo Urzaiz
+]
+
+TU_ROLE             = "tu_gs"   # must match with extra["role"] from JSON
+TU_SPEED_MPS        = 750       # plane: ~250 m/s, car: ~30 m/s, ship: ~10 m/s, ave-renfe: ~83.3 m/s
+TU_WAYPOINT_RADIUS  = 5_000.0   # metros - distancia para considerar waypoint alcanzado
+TU_ALTITUDE         = 50_000.0 #10_000.0
+tu_waypoint_index   = 0
+TU_HEADING_DEG      = 45.0      # 0=North, 90=East, 180=South, 270=West
 
 tu_current_lat: float | None = None
 tu_current_lon: float | None = None
-
-def move_ground_position(lat_deg: float, lon_deg: float,
-                         speed_mps: float, heading_deg: float,
-                         dt_seconds: float) -> tuple[float, float]:
-    """
-    Desplaza un punto en la superficie terrestre a velocidad y rumbo constante.
-    Usa la fórmula de punto destino (esfera perfecta).
-    Devuelve (nueva_lat_deg, nueva_lon_deg).
-    """
-    lat1   = math.radians(lat_deg)
-    lon1   = math.radians(lon_deg)
-    theta  = math.radians(heading_deg)  # rumbo en radianes
-    d      = speed_mps * dt_seconds     # distancia recorrida en este paso
-    delta  = d / EARTH_RADIUS_M         # distancia angular en radianes
-
-    lat2 = math.asin(
-        math.sin(lat1) * math.cos(delta) +
-        math.cos(lat1) * math.sin(delta) * math.cos(theta)
-    )
-    lon2 = lon1 + math.atan2(
-        math.sin(theta) * math.sin(delta) * math.cos(lat1),
-        math.cos(delta) - math.sin(lat1) * math.sin(lat2)
-    )
-
-    return math.degrees(lat2), math.degrees(lon2)
 
 polar_threshold = dec2ra(66.5)
 
@@ -108,22 +96,40 @@ if __name__ == "__main__":
                     role = instance.extra.get("role", "")
                     if role == TU_ROLE:
                         if tu_current_lat is None:
-                            tu_current_lat = float(instance.extra[EX_LATITUDE_KEY])
-                            tu_current_lon = float(instance.extra[EX_LONGITUDE_KEY])
+                            tu_current_lat, tu_current_lon = TU_WAYPOINTS[0]
                             logger.info(f"[TU] Initialized at lat={tu_current_lat:.4f} lon={tu_current_lon:.4f}")
 
-                        tu_current_lat, tu_current_lon = move_ground_position(
-                            lat_deg     = tu_current_lat,
-                            lon_deg     = tu_current_lon,
-                            speed_mps   = TU_SPEED_MPS,
-                            heading_deg = TU_HEADING_DEG,
-                            dt_seconds  = step_second
-                        )
-                        logger.info(f"[Terminal Unit] new pos: lat={tu_current_lat:.5f}  lon={tu_current_lon:.5f}")
+                        # Comprobar si hemos llegado al waypoint actual
+                        if tu_waypoint_index < len(TU_WAYPOINTS) - 1:
+                            target_lat, target_lon = TU_WAYPOINTS[tu_waypoint_index + 1]
+                            dist_to_next = haversine_m(tu_current_lat, tu_current_lon,
+                                                    target_lat, target_lon)
+                            if dist_to_next < TU_WAYPOINT_RADIUS:
+                                tu_waypoint_index += 1
+                                logger.info(f"[TU] Reached waypoint {tu_waypoint_index}: {TU_WAYPOINTS[tu_waypoint_index]}")
 
-                        # Update extra in-memory so position_map in second loop is consistent
+                        # Moverse hacia el siguiente waypoint (o quedarse si ya llegamos)
+                        if tu_waypoint_index < len(TU_WAYPOINTS) - 1:
+                            target_lat, target_lon = TU_WAYPOINTS[tu_waypoint_index + 1]
+                            heading = bearing_to(tu_current_lat, tu_current_lon,
+                                                target_lat, target_lon)
+                            tu_current_lat, tu_current_lon = move_TU_position(
+                                lat_deg     = tu_current_lat,
+                                lon_deg     = tu_current_lon,
+                                speed_mps   = TU_SPEED_MPS,
+                                heading_deg = heading,          # recalculado cada paso
+                                dt_seconds  = step_second,
+                                user_altitude = TU_ALTITUDE,
+                            )
+                            logger.info(f"[TU] → waypoint {tu_waypoint_index+1} "
+                                        f"({dist_to_next/1000:.1f} km) | "
+                                        f"bearing={heading:.1f}° | "
+                                        f"pos=({tu_current_lat:.4f}, {tu_current_lon:.4f})")
+                        else:
+                            logger.info("[TU] Destination reached: Vigo Urzáiz")
                         instance.extra[EX_LATITUDE_KEY] = str(tu_current_lat)
                         instance.extra[EX_LONGITUDE_KEY] = str(tu_current_lon)
+                        instance.extra[EX_ALTITUDE_KEY]  = str(TU_ALTITUDE)
 
                         # Try to persist to etcd (best effort)
                         try:
@@ -134,8 +140,6 @@ if __name__ == "__main__":
 
                         gs_position.latitude  = math.radians(tu_current_lat)
                         gs_position.longitude = math.radians(tu_current_lon)
-                        # IMPORTANT: altitude must match what calculate_postion does for GS:
-                        # trajectory.py uses deg2rad(altitude) — so replicate that here
                         gs_position.altitude  = math.radians(float(instance.extra[EX_ALTITUDE_KEY]))
                     else:
                         gs_position.latitude  = float(instance.extra[EX_LATITUDE_KEY]) / 180 * math.pi

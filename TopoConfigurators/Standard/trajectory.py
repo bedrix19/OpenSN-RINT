@@ -69,3 +69,87 @@ def select_closest_satellite(
         if select_satellite_id == end_info.instance_id:
             change = False
     return select_satellite_id,change
+
+# φ is latitude, λ is longitude, θ is the bearing (clockwise from north),
+# δ is the angular distance d/R; d being the distance travelled,
+# R the earth’s radius
+
+EARTH_RADIUS_M = 6_371_000.0
+
+def move_ground_position(
+    lat_deg:     float,
+    lon_deg:     float,
+    speed_mps:   float,
+    heading_deg: float,
+    dt_seconds:  float,
+) -> tuple[float, float]:
+    """
+    Advance a point on the Earth's surface at constant speed and bearing.
+    Returns (new_lat_deg, new_lon_deg).
+    """
+    φ1    = math.radians(lat_deg)
+    λ1    = math.radians(lon_deg)
+    θ     = math.radians(heading_deg)
+    δ     = (speed_mps * dt_seconds) / EARTH_RADIUS_M  # angular distance [rad]
+
+    φ2 = math.asin(
+        math.sin(φ1) * math.cos(δ) +
+        math.cos(φ1) * math.sin(δ) * math.cos(θ)
+    )
+    λ2 = λ1 + math.atan2(
+        math.sin(θ) * math.sin(δ) * math.cos(φ1),
+        math.cos(δ) - math.sin(φ1) * math.sin(φ2),
+    )
+    # Normalise longitude to [-180, +180] in case we cross the antimeridian
+    λ2 = (math.degrees(λ2) + 540) % 360 - 180
+
+    return math.degrees(φ2), λ2
+
+def move_TU_position(
+    lat_deg:     float,
+    lon_deg:     float,
+    speed_mps:   float,
+    heading_deg: float,
+    dt_seconds:  float,
+    user_altitude: float,
+) -> tuple[float, float]:
+    """
+    Advance a point on the Earth's surface at constant speed and bearing.
+    Returns (new_lat_deg, new_lon_deg).
+    """
+    φ1    = math.radians(lat_deg)
+    λ1    = math.radians(lon_deg)
+    θ     = math.radians(heading_deg)
+    δ     = (speed_mps * dt_seconds) / (EARTH_RADIUS_M + user_altitude)  # angular distance
+
+    φ2 = math.asin(
+        math.sin(φ1) * math.cos(δ) +
+        math.cos(φ1) * math.sin(δ) * math.cos(θ)
+    )
+    λ2 = λ1 + math.atan2(
+        math.sin(θ) * math.sin(δ) * math.cos(φ1),
+        math.cos(δ) - math.sin(φ1) * math.sin(φ2),
+    )
+    # Normalise longitude to [-180, +180] in case we cross the antimeridian
+    λ2 = (math.degrees(λ2) + 540) % 360 - 180
+
+    return math.degrees(φ2), λ2
+
+def bearing_to(lat1_deg: float, lon1_deg: float,
+               lat2_deg: float, lon2_deg: float) -> float:
+    
+    φ1, φ2 = math.radians(lat1_deg), math.radians(lat2_deg)
+    Δλ = math.radians(lon2_deg - lon1_deg)
+    x = math.sin(Δλ) * math.cos(φ2)
+    y = math.cos(φ1) * math.sin(φ2) - math.sin(φ1) * math.cos(φ2) * math.cos(Δλ)
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+
+def haversine_m(lat1_deg: float, lon1_deg: float,
+                lat2_deg: float, lon2_deg: float) -> float:
+    
+    φ1, φ2 = math.radians(lat1_deg), math.radians(lat2_deg)
+    Δφ = math.radians(lat2_deg - lat1_deg)
+    Δλ = math.radians(lon2_deg - lon1_deg)
+    a = math.sin(Δφ/2)**2 + math.cos(φ1) * math.cos(φ2) * math.sin(Δλ/2)**2
+    return EARTH_RADIUS_M * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
